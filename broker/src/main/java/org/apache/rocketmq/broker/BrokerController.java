@@ -227,6 +227,12 @@ public class BrokerController {
         return queryThreadPoolQueue;
     }
 
+    /**
+     * Broker相关组件初始化
+     *
+     * @return
+     * @throws CloneNotSupportedException
+     */
     public boolean initialize() throws CloneNotSupportedException {
         boolean result = this.topicConfigManager.load();
 
@@ -236,6 +242,7 @@ public class BrokerController {
 
         if (result) {
             try {
+                //存储组件
                 this.messageStore =
                     new DefaultMessageStore(this.messageStoreConfig, this.brokerStatsManager, this.messageArrivingListener,
                         this.brokerConfig);
@@ -821,11 +828,17 @@ public class BrokerController {
         return this.brokerConfig.getBrokerIP1() + ":" + this.nettyServerConfig.getListenPort();
     }
 
+    /**
+     * 启动组件
+     *
+     * @throws Exception
+     */
     public void start() throws Exception {
         if (this.messageStore != null) {
             this.messageStore.start();
         }
 
+        //启动nettyServer，等待消息发送
         if (this.remotingServer != null) {
             this.remotingServer.start();
         }
