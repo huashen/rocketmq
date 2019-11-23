@@ -27,6 +27,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import com.alibaba.fastjson.JSON;
 import org.apache.rocketmq.client.consumer.AllocateMessageQueueStrategy;
 import org.apache.rocketmq.client.impl.FindBrokerResult;
 import org.apache.rocketmq.client.impl.factory.MQClientInstance;
@@ -397,6 +399,7 @@ public abstract class RebalanceImpl {
             }
         }
 
+        //将重新分配的messagequeue放到pullRequestQueue
         this.dispatchPullRequest(pullRequestList);
 
         return changed;
