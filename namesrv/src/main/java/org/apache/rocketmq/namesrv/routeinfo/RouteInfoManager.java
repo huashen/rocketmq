@@ -49,10 +49,49 @@ public class RouteInfoManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
     private final static long BROKER_CHANNEL_EXPIRED_TIME = 1000 * 60 * 2;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+    /**
+     * topic消息队列路由信息，消息发送时根据路由表进行负载均衡
+     topicQueueTable:{
+        "topic1":[{
+            "brokerName":"broker-a",
+            "readQueueNums":1,
+            "writeQueueNums":1,
+            "perm":6,
+            "topicSynFlag":0}
+        ]
+     }
+     */
     private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
+
+    /**
+     * Broker基础信息，包含brokerName、所属集群名称、主备Broker地址
+     brokerAddrTable:{
+        "broker-a":{
+            "cluster":"c1",
+            "brokerName":"broker-a",
+            "brokerAddrs":{
+                0:"192.168.1.1:10000",
+                1:"192.168.1.2:10000"
+            }
+        }
+     }
+     */
     private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
+
+    /**
+     * Broker集群信息，存储集群中所有Broker名称
+     */
     private final HashMap<String/* clusterName */, Set<String/* brokerName */>> clusterAddrTable;
+
+    /**
+     * Broker状态信息。NameServer每次收到心跳包时会替换该信息
+     */
     private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
+
+    /**
+     * Broker上的FilterServer 列表
+     */
     private final HashMap<String/* brokerAddr */, List<String>/* Filter Server */> filterServerTable;
 
     public RouteInfoManager() {
@@ -99,6 +138,19 @@ public class RouteInfoManager {
         return topicList.encode();
     }
 
+    /**
+     * 注册Broker
+     *
+     * @param clusterName
+     * @param brokerAddr
+     * @param brokerName
+     * @param brokerId
+     * @param haServerAddr
+     * @param topicConfigWrapper
+     * @param filterServerList
+     * @param channel
+     * @return
+     */
     public RegisterBrokerResult registerBroker(
         final String clusterName,
         final String brokerAddr,
