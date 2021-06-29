@@ -72,7 +72,9 @@ public class NamesrvStartup {
         System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(MQVersion.CURRENT_VERSION));
         //PackageConflictDetect.detectFastjson();
 
+        //创建命令行参数对象，这里定义了 -h 和 -n参数
         Options options = ServerUtil.buildCommandlineOptions(new Options());
+        //根据Options和运行时参数args生成命令行对象，buildCommandlineOptions定义了-c参数（Name server config properties file）和-p参数（Print all config item）
         commandLine = ServerUtil.parseCmdLine("mqnamesrv", args, buildCommandlineOptions(options), new PosixParser());
         if (null == commandLine) {
             System.exit(-1);
@@ -83,11 +85,15 @@ public class NamesrvStartup {
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
         nettyServerConfig.setListenPort(9876);
         if (commandLine.hasOption('c')) {
+            //读取命令行-c参数指定的配置文件
             String file = commandLine.getOptionValue('c');
             if (file != null) {
+                // 将文件转成输入流
                 InputStream in = new BufferedInputStream(new FileInputStream(file));
                 properties = new Properties();
+                // 加载到属性对象
                 properties.load(in);
+                // 装载配置
                 MixAll.properties2Object(properties, namesrvConfig);
                 MixAll.properties2Object(properties, nettyServerConfig);
 
