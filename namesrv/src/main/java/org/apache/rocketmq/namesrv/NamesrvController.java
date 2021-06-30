@@ -75,8 +75,10 @@ public class NamesrvController {
 
     public boolean initialize() {
 
+        // 加载KV配置
         this.kvConfigManager.load();
 
+        // 创建Netty网络服务对象
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
 
         this.remotingExecutor =
@@ -84,6 +86,7 @@ public class NamesrvController {
 
         this.registerProcessor();
 
+        // 创建定时任务--每隔10s扫描一次Broker，并定时剔除不活跃的Broker
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -92,6 +95,7 @@ public class NamesrvController {
             }
         }, 5, 10, TimeUnit.SECONDS);
 
+        // 创建定时任务--每隔10分钟打印一遍KV配置
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override

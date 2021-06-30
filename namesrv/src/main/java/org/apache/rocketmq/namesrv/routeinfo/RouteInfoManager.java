@@ -165,6 +165,7 @@ public class RouteInfoManager {
             try {
                 this.lock.writeLock().lockInterruptibly();
 
+                // 获取集群下所有的Broker，并将当前Broker加入clusterAddrTable，由于brokerNames是Set结构，并不会重复
                 Set<String> brokerNames = this.clusterAddrTable.get(clusterName);
                 if (null == brokerNames) {
                     brokerNames = new HashSet<String>();
@@ -174,6 +175,7 @@ public class RouteInfoManager {
 
                 boolean registerFirst = false;
 
+                // 获取Broker信息，如果是首次注册，那么新建一个BrokerData并加入brokerAddrTable
                 BrokerData brokerData = this.brokerAddrTable.get(brokerName);
                 if (null == brokerData) {
                     registerFirst = true;
@@ -191,9 +193,11 @@ public class RouteInfoManager {
                     }
                 }
 
+                // 这里判断Broker是否是已经注册过
                 String oldAddr = brokerData.getBrokerAddrs().put(brokerId, brokerAddr);
                 registerFirst = registerFirst || (null == oldAddr);
 
+                // 如果是Broker是Master节点，并且Topic信息更新或者是首次注册，那么创建更新topic队列信息
                 if (null != topicConfigWrapper
                     && MixAll.MASTER_ID == brokerId) {
                     if (this.isBrokerTopicConfigChanged(brokerAddr, topicConfigWrapper.getDataVersion())
@@ -208,6 +212,7 @@ public class RouteInfoManager {
                     }
                 }
 
+                // 更新BrokerLiveInfo状态信息
                 BrokerLiveInfo prevBrokerLiveInfo = this.brokerLiveTable.put(brokerAddr,
                     new BrokerLiveInfo(
                         System.currentTimeMillis(),
@@ -483,10 +488,13 @@ public class RouteInfoManager {
         while (it.hasNext()) {
             Entry<String, BrokerLiveInfo> next = it.next();
             long last = next.getValue().getLastUpdateTimestamp();
+            // 如果当前时间大于最后修改时间加上Broker过期时间，那么就剔除该Broker
             if ((last + BROKER_CHANNEL_EXPIRED_TIME) < System.currentTimeMillis()) {
+                // 关闭Broker对应的channel
                 RemotingUtil.closeChannel(next.getValue().getChannel());
                 it.remove();
                 log.warn("The broker channel expired, {} {}ms", next.getKey(), BROKER_CHANNEL_EXPIRED_TIME);
+                // 从brokerLiveTable、brokerAddrTable、topicQueueTable移除Broker相关信息
                 this.onChannelDestroy(next.getKey(), next.getValue().getChannel());
             }
         }
