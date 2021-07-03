@@ -81,7 +81,13 @@ public class TopicPublishInfo {
         this.haveTopicRouterInfo = haveTopicRouterInfo;
     }
 
+    /**
+     * sendLatencyFaultEnable=false 时调用本方法
+     * @param lastBrokerName
+     * @return
+     */
     public MessageQueue selectOneMessageQueue(final String lastBrokerName) {
+        //lastBrokerName表示的是上一次执行消息发送时选择失败的broker
         if (lastBrokerName == null) {
             return selectOneMessageQueue();
         } else {
