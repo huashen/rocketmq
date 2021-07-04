@@ -31,18 +31,23 @@ public class LatencyFaultToleranceImpl implements LatencyFaultTolerance<String> 
 
     @Override
     public void updateFaultItem(final String name, final long currentLatency, final long notAvailableDuration) {
+        // 从缓存中获取失败条目
         FaultItem old = this.faultItemTable.get(name);
         if (null == old) {
+            // 如果缓存不存在，新建失败条目
             final FaultItem faultItem = new FaultItem(name);
             faultItem.setCurrentLatency(currentLatency);
+            // broker开始可用时间=当前时间+规避时长
             faultItem.setStartTimestamp(System.currentTimeMillis() + notAvailableDuration);
 
             old = this.faultItemTable.putIfAbsent(name, faultItem);
             if (old != null) {
+                // 更新旧的失败条目
                 old.setCurrentLatency(currentLatency);
                 old.setStartTimestamp(System.currentTimeMillis() + notAvailableDuration);
             }
         } else {
+            // 更新旧的失败条目
             old.setCurrentLatency(currentLatency);
             old.setStartTimestamp(System.currentTimeMillis() + notAvailableDuration);
         }
