@@ -272,15 +272,20 @@ public abstract class RebalanceImpl {
                     log.warn("doRebalance, {} {}, get consumer id list failed", consumerGroup, topic);
                 }
 
+
+                // 如果 主题订阅信息mqSet和主题订阅客户端不为空，就执行消息队列负载与重新分布
                 if (mqSet != null && cidAll != null) {
                     List<MessageQueue> mqAll = new ArrayList<MessageQueue>();
                     mqAll.addAll(mqSet);
 
+                    // 排序，确保每个消息队列只分配一个消费者
                     Collections.sort(mqAll);
                     Collections.sort(cidAll);
 
+                    // 消息队列分配算法
                     AllocateMessageQueueStrategy strategy = this.allocateMessageQueueStrategy;
 
+                    // 执行算法，并得到队列重新分配后的结果对象allocateResult
                     List<MessageQueue> allocateResult = null;
                     try {
                         allocateResult = strategy.allocate(
@@ -299,6 +304,10 @@ public abstract class RebalanceImpl {
                         allocateResultSet.addAll(allocateResult);
                     }
 
+                    /**
+                     * 用户重新分配后的结果allocateResult来更新当前消费者负载的消息队列缓存表processQueueTable，
+                     * 并生成 pullRequestList 放入 pullRequestQueue 阻塞队列中
+                     */
                     boolean changed = this.updateProcessQueueTableInRebalance(topic, allocateResultSet, isOrder);
                     if (changed) {
                         log.info(
@@ -369,7 +378,9 @@ public abstract class RebalanceImpl {
         }
 
         List<PullRequest> pullRequestList = new ArrayList<PullRequest>();
+        // 循环执行，将mqSet订阅数据封装成PullRequest对象，并添加到pullRequestList中
         for (MessageQueue mq : mqSet) {
+            // 如果缓存列表不存在该订阅信息，说明这次消息队列重新分配后新增加的消息队列
             if (!this.processQueueTable.containsKey(mq)) {
                 if (isOrder && !this.lock(mq)) {
                     log.warn("doRebalance, {}, add a new mq failed, {}, because lock failed", consumerGroup, mq);

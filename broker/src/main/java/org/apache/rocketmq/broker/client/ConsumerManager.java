@@ -99,7 +99,9 @@ public class ConsumerManager {
         ConsumeType consumeType, MessageModel messageModel, ConsumeFromWhere consumeFromWhere,
         final Set<SubscriptionData> subList, boolean isNotifyConsumerIdsChangedEnable) {
 
+        // 获取消费组内的消费者信息
         ConsumerGroupInfo consumerGroupInfo = this.consumerTable.get(group);
+        // 如果消费组的消费者信息为空，则新建一个
         if (null == consumerGroupInfo) {
             ConsumerGroupInfo tmp = new ConsumerGroupInfo(group, consumeType, messageModel, consumeFromWhere);
             ConsumerGroupInfo prev = this.consumerTable.putIfAbsent(group, tmp);
@@ -109,6 +111,7 @@ public class ConsumerManager {
         boolean r1 =
             consumerGroupInfo.updateChannel(clientChannelInfo, consumeType, messageModel,
                 consumeFromWhere);
+        // 更新订阅信息，订阅信息是按照消费组存放的，因此这步骤就会导致同一个消费组内的各个消费者客户端的订阅信息相互被覆盖
         boolean r2 = consumerGroupInfo.updateSubscription(subList);
 
         if (r1 || r2) {
