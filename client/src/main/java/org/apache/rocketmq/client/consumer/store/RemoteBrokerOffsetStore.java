@@ -43,6 +43,8 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
     private final static InternalLogger log = ClientLogger.getLog();
     private final MQClientInstance mQClientFactory;
     private final String groupName;
+
+    //本地位移缓存容器 key:MessageQueue  value:当前 MessageQueue 的消费位移
     private ConcurrentMap<MessageQueue, AtomicLong> offsetTable =
         new ConcurrentHashMap<MessageQueue, AtomicLong>();
 
@@ -111,6 +113,10 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
         return -1;
     }
 
+    /**
+     *
+     * @param mqs 当前分配的队列
+     */
     @Override
     public void persistAll(Set<MessageQueue> mqs) {
         if (null == mqs || mqs.isEmpty())
@@ -118,12 +124,15 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
 
         final HashSet<MessageQueue> unusedMQ = new HashSet<MessageQueue>();
         if (!mqs.isEmpty()) {
+            // 遍历位移缓存容器
             for (Map.Entry<MessageQueue, AtomicLong> entry : this.offsetTable.entrySet()) {
                 MessageQueue mq = entry.getKey();
                 AtomicLong offset = entry.getValue();
                 if (offset != null) {
+                    // 位移缓存容器包含在当前分配队列，则进行消费位移提交
                     if (mqs.contains(mq)) {
                         try {
+                            // 提交消费位移
                             this.updateConsumeOffsetToBroker(mq, offset.get());
                             log.info("[persistAll] Group: {} ClientId: {} updateConsumeOffsetToBroker {} {}",
                                 this.groupName,
@@ -140,6 +149,7 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
             }
         }
 
+        // 将未分配的队列从位移缓存中移除
         if (!unusedMQ.isEmpty()) {
             for (MessageQueue mq : unusedMQ) {
                 this.offsetTable.remove(mq);

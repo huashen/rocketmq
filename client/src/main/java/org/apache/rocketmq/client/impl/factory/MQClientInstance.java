@@ -298,6 +298,7 @@ public class MQClientInstance {
             }
         }, 1000, this.clientConfig.getHeartbeatBrokerInterval(), TimeUnit.MILLISECONDS);
 
+        //定时将本地缓存提交到broker
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override

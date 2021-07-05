@@ -203,12 +203,14 @@ public class ProcessQueue {
         long result = -1;
         final long now = System.currentTimeMillis();
         try {
+            //各个消费线程并发执行，这里进行加锁操作
             this.lockTreeMap.writeLock().lockInterruptibly();
             this.lastConsumeTimestamp = now;
             try {
                 if (!msgTreeMap.isEmpty()) {
                     result = this.queueOffsetMax + 1;
                     int removedCnt = 0;
+                    // 移除已消费的消息
                     for (MessageExt msg : msgs) {
                         MessageExt prev = msgTreeMap.remove(msg.getQueueOffset());
                         if (prev != null) {
@@ -216,8 +218,10 @@ public class ProcessQueue {
                             msgSize.addAndGet(0 - msg.getBody().length);
                         }
                     }
+                    // 消息总量累加
                     msgCount.addAndGet(removedCnt);
 
+                    // 返回消息容器中最小元素 key
                     if (!msgTreeMap.isEmpty()) {
                         result = msgTreeMap.firstKey();
                     }

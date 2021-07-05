@@ -37,6 +37,22 @@ public class ConsumerOffsetManager extends ConfigManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private static final String TOPIC_GROUP_SEPARATOR = "@";
 
+    /**
+     * broker 端的消费位移缓存容器
+     * ConcurrentMap key 为 queueId，value 为位移
+     * 会以 json 的形式持久化到磁盘 ${ROCKETMQ_HOME}/store/config/consumerOffset.json
+     *  {
+     *     "offsetTable": {
+     *         "test-topic@test-group": {
+     *             "0": 88526,
+     *             "1": 88528,
+     *             "2": 88532,
+     *             "3": 88537
+     *         }
+     *     }
+     * }
+     *
+     */
     private ConcurrentMap<String/* topic@group */, ConcurrentMap<Integer, Long>> offsetTable =
         new ConcurrentHashMap<String, ConcurrentMap<Integer, Long>>(512);
 
