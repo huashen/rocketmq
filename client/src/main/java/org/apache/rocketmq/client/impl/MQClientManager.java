@@ -44,7 +44,16 @@ public class MQClientManager {
         return getAndCreateMQClientInstance(clientConfig, null);
     }
 
+    /**
+     * 同一个JVM中的不同消费者和不同生产者在启动时获取的MQClientInstance实例都是同一个
+     * MQClientInstance封装了RocketMQ网络处理的API，是消息生产者（Producer）、消息消费者(Consumer)与NameServer、Broker打交道的网络通道
+     * @param clientConfig
+     * @param rpcHook
+     * @return
+     */
     public MQClientInstance getAndCreateMQClientInstance(final ClientConfig clientConfig, RPCHook rpcHook) {
+        //clientId由ip地址@实例名称构成
+        //如果ProducerGroup为CLIENT_INNER_PRODUCER，实例名称为被更改为PID进程ID
         String clientId = clientConfig.buildMQClientId();
         MQClientInstance instance = this.factoryTable.get(clientId);
         if (null == instance) {
