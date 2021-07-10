@@ -1126,6 +1126,10 @@ public class BrokerController {
                 slaveSyncFuture.cancel(false);
             }
             this.slaveSynchronize.setMasterAddr(null);
+
+            /**
+             * 如果 Broker 是从服务器，则会开启这个定时任务：同步消费进度到master Broker
+             */
             slaveSyncFuture = this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
                 @Override
                 public void run() {
