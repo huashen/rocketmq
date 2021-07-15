@@ -107,8 +107,11 @@ public class BrokerStartup {
                 System.exit(-1);
             }
 
+            //封装 Broker 配置信息
             final BrokerConfig brokerConfig = new BrokerConfig();
+            //封装了作为消息队列服务器的配置信息
             final NettyServerConfig nettyServerConfig = new NettyServerConfig();
+            //封装了作为NameServer客户端配置信息
             final NettyClientConfig nettyClientConfig = new NettyClientConfig();
 
             nettyClientConfig.setUseTLS(Boolean.parseBoolean(System.getProperty(TLS_ENABLE,
