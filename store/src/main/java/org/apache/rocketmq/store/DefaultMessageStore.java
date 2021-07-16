@@ -255,6 +255,7 @@ public class DefaultMessageStore implements MessageStore {
             log.info("[SetReputOffset] maxPhysicalPosInLogicQueue={} clMinOffset={} clMaxOffset={} clConfirmedOffset={}",
                 maxPhysicalPosInLogicQueue, this.commitLog.getMinOffset(), this.commitLog.getMaxOffset(), this.commitLog.getConfirmOffset());
             this.reputMessageService.setReputFromOffset(maxPhysicalPosInLogicQueue);
+            //启动消息分发到各中Consumer queue服务线程reputMessageService
             this.reputMessageService.start();
 
             /**
@@ -272,12 +273,16 @@ public class DefaultMessageStore implements MessageStore {
         }
 
         if (!messageStoreConfig.isEnableDLegerCommitLog()) {
+            //启动HA主从同步线程
             this.haService.start();
             this.handleScheduleMessageService(messageStoreConfig.getBrokerRole());
         }
 
+        //启动刷盘任务线程
         this.flushConsumeQueueService.start();
+        //启动commitLog线程
         this.commitLog.start();
+        //启动存储存储统计服务线程storeStateService
         this.storeStatsService.start();
 
         this.createTempFile();
