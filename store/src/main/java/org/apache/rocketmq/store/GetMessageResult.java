@@ -35,6 +35,7 @@ public class GetMessageResult {
 
     private int bufferTotalSize = 0;
 
+    //默认值为 false，即默认消费者不会消费从服务器
     private boolean suggestPullingFromSlave = false;
 
     private int msgCount4Commercial = 0;

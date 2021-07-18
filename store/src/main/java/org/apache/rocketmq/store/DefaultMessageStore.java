@@ -628,6 +628,16 @@ public class DefaultMessageStore implements MessageStore {
 
                         nextBeginOffset = offset + (i / ConsumeQueue.CQ_STORE_UNIT_SIZE);
 
+                        /**
+                         * maxOffsetPy 为当前最大物理偏移量
+                         * maxPhyOffsetPulling 为本次消息拉取最大物理偏移量
+                         * 差值 diff 表示消息堆积量
+                         *
+                         * TOTAL_PHYSICAL_MEMORY_SIZE 表示当前系统物理内存
+                         * accessMessageInMemoryMaxRatio 的默认值为 40
+                         *
+                         * 当前消息堆积量是否大于物理内存的 40 %，如果大于则将 suggestPullingFromSlave 设置为 true
+                         */
                         long diff = maxOffsetPy - maxPhyOffsetPulling;
                         long memory = (long) (StoreUtil.TOTAL_PHYSICAL_MEMORY_SIZE
                             * (this.messageStoreConfig.getAccessMessageInMemoryMaxRatio() / 100.0));
