@@ -114,6 +114,12 @@ public class PullAPIWrapper {
         return pullResult;
     }
 
+    /**
+     * 当消费者收到拉取响应回来的数据后，会将下次建议拉取的 brokerID 缓存起来。
+     * 下次拉取消息就会从 pullFromWhichNodeTable 中取出拉取 brokerId
+     * @param mq
+     * @param brokerId
+     */
     public void updatePullFromWhichNode(final MessageQueue mq, final long brokerId) {
         AtomicLong suggest = this.pullFromWhichNodeTable.get(mq);
         if (null == suggest) {

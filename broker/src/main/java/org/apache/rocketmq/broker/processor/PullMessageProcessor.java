@@ -242,6 +242,10 @@ public class PullMessageProcessor implements NettyRequestProcessor {
             responseHeader.setMinOffset(getMessageResult.getMinOffset());
             responseHeader.setMaxOffset(getMessageResult.getMaxOffset());
 
+            /**
+             * 如果发现主服务器的消息堆积超过了物理内存的 40%，
+             * 则会设置 suggestWhichBrokerId 为从服务器 broker ID
+             */
             if (getMessageResult.isSuggestPullingFromSlave()) {
                 responseHeader.setSuggestWhichBrokerId(subscriptionGroupConfig.getWhichBrokerWhenConsumeSlowly());
             } else {
