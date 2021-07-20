@@ -85,6 +85,11 @@ public class HAService {
         return result;
     }
 
+    /**
+     * master收到slave的位移量之后进行更新
+     *
+     * @param offset
+     */
     public void notifyTransferSome(final long offset) {
         for (long value = this.push2SlaveMaxOffset.get(); offset > value; ) {
             boolean ok = this.push2SlaveMaxOffset.compareAndSet(value, offset);
@@ -348,6 +353,10 @@ public class HAService {
             }
         }
 
+        /**
+         * 判断是否到了需要上报位移的时间间隔
+         * @return
+         */
         private boolean isTimeToReportOffset() {
             long interval =
                 HAService.this.defaultMessageStore.getSystemClock().now() - this.lastWriteTimestamp;
@@ -357,6 +366,12 @@ public class HAService {
             return needHeart;
         }
 
+        /**
+         * 发送心跳包上报位移
+         *
+         * @param maxOffset
+         * @return
+         */
         private boolean reportSlaveMaxOffset(final long maxOffset) {
             this.reportOffset.position(0);
             this.reportOffset.limit(8);
@@ -551,6 +566,7 @@ public class HAService {
                     if (this.connectMaster()) {
 
                         if (this.isTimeToReportOffset()) {
+                            //slave向master上报位移
                             boolean result = this.reportSlaveMaxOffset(this.currentReportedOffset);
                             if (!result) {
                                 this.closeMaster();
