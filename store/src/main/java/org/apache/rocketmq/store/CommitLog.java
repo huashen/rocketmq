@@ -41,6 +41,8 @@ import org.apache.rocketmq.store.schedule.ScheduleMessageService;
 
 /**
  * Store all metadata downtime for recovery, data protection reliability
+ * 消息主体以及元数据的存储主体，存储Producer端写入的消息主体内容。
+ * 消息存放的物理文件，每台broker上的commitlog被本机所有的queue共享，不做任何区分
  */
 public class CommitLog {
     // Message's MAGIC CODE daa320a7
