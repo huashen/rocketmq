@@ -214,7 +214,7 @@ public class DefaultMessageStore implements MessageStore {
      * @throws Exception
      */
     public void start() throws Exception {
-
+        //写lock 文件,尝试获取lock文件锁，保证磁盘上的文件只会被一个messageStore读写
         lock = lockFile.getChannel().tryLock(0, 1, false);
         if (lock == null || lock.isShared() || !lock.isValid()) {
             throw new RuntimeException("Lock failed,MQ already started");
@@ -254,6 +254,10 @@ public class DefaultMessageStore implements MessageStore {
             }
             log.info("[SetReputOffset] maxPhysicalPosInLogicQueue={} clMinOffset={} clMaxOffset={} clConfirmedOffset={}",
                 maxPhysicalPosInLogicQueue, this.commitLog.getMinOffset(), this.commitLog.getMaxOffset(), this.commitLog.getConfirmOffset());
+            /**
+             * 启动reputMessageService，
+             * 该服务负责将CommitLog中的消息offset记录到cosumeQueue文件中
+             */
             this.reputMessageService.setReputFromOffset(maxPhysicalPosInLogicQueue);
             //启动消息分发到各中Consumer queue服务线程reputMessageService
             this.reputMessageService.start();
@@ -285,7 +289,9 @@ public class DefaultMessageStore implements MessageStore {
         //启动存储存储统计服务线程storeStateService
         this.storeStatsService.start();
 
+        //对于新的broker，初始化文件存储的目录
         this.createTempFile();
+        //启动定时任务
         this.addScheduleTask();
         this.shutdown = false;
     }
@@ -1459,6 +1465,7 @@ public class DefaultMessageStore implements MessageStore {
             if (brokerRole == BrokerRole.SLAVE) {
                 this.scheduleMessageService.shutdown();
             } else {
+                //针对master，启动延时消息调度服务
                 this.scheduleMessageService.start();
             }
         }
