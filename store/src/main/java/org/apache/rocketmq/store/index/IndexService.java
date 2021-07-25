@@ -198,13 +198,20 @@ public class IndexService {
         return topic + "#" + key;
     }
 
+    /**
+     * Index生成过程
+     * @param req
+     */
     public void buildIndex(DispatchRequest req) {
+        //1、获取或者新建当前可写入的index file
         IndexFile indexFile = retryGetAndCreateIndexFile();
         if (indexFile != null) {
+            //2、获取当前indexFile中记录的最大offset
             long endPhyOffset = indexFile.getEndPhyOffset();
             DispatchRequest msg = req;
             String topic = msg.getTopic();
             String keys = msg.getKeys();
+            //3、新来消息是之前的，不应该出现
             if (msg.getCommitLogOffset() < endPhyOffset) {
                 return;
             }
@@ -219,6 +226,7 @@ public class IndexService {
                     return;
             }
 
+            //4、单条消息
             if (req.getUniqKey() != null) {
                 indexFile = putKey(indexFile, msg, buildKey(topic, req.getUniqKey()));
                 if (indexFile == null) {
@@ -227,6 +235,7 @@ public class IndexService {
                 }
             }
 
+            //5、多个msg，循环逐个存入
             if (keys != null && keys.length() > 0) {
                 String[] keyset = keys.split(MessageConst.KEY_SEPARATOR);
                 for (int i = 0; i < keyset.length; i++) {
